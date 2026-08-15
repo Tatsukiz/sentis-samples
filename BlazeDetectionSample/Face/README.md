@@ -6,6 +6,25 @@ BlazeFace is a fast, light-weight face detector from Google Research. A pretrain
 
 The BlazeFace model has been converted from TFLite to ONNX for use in Sentis using [tf2onnx](https://github.com/onnx/tensorflow-onnx) with the default export parameters.
 
+## Input source
+
+The demo runs either on a still image or on a live webcam feed. Open the `FaceDetection` scene, select the `Face Detection` game object, and set **Input Mode** on the `FaceDetection` component:
+
+| Input Mode | Input used | Settings |
+| --- | --- | --- |
+| `Image` | The texture assigned to **Image Texture** | — |
+| `Webcam` | A `WebCamTexture` from the device camera | **Device Name**, **Resolution**, **FPS**, **Mirror Webcam** |
+
+The input source is resolved once in `Start`, so pick the mode before entering play mode, changing it while playing has no effect.
+
+In `Webcam` mode the demo requests camera authorization, waits for the device to deliver its first frame, and then feeds the `WebCamTexture` to the detector every time the camera produces a new frame. If no camera is available, the permission is denied, or the device fails to start within 5 seconds, a warning is logged and the demo falls back to **Image Texture**. Leave **Device Name** empty to use the first device reported by the platform.
+
+**Mirror Webcam** gives the mirrored view you expect from a front facing camera. Inference still runs on the unmirrored image, only the preview uvs and the detection positions are flipped, so the boxes and keypoints stay on the face.
+
+Two limitations to be aware of when using a webcam:
+- The `WebCamTexture` is bound directly to the compute shader that fills the input tensor. On some Android devices the camera image is an external texture that cannot be sampled this way, blit it into a `RenderTexture` first if you hit this.
+- The device orientation reported by `WebCamTexture.videoRotationAngle` is not applied.
+
 ## Functional API
 
 The BlazeFace model takes a (1, 128, 128, 3) input image tensor and outputs a (1, 896, 16) boxes tensor and a (1, 896, 1) scores tensor.
